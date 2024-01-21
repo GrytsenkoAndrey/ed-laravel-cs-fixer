@@ -219,4 +219,74 @@ If you want to install PHP Coding Standards Fixer on your favourite editor then 
 - [Vim](https://github.com/stephpy/vim-php-cs-fixer)
 - [VS Code](https://github.com/junstyle/vscode-php-cs-fixer)
 
+# How to configure PHPStorm to use PHP-CS-Fixer
 
+So we start our journey with some prerequisites:
+
+- PHPStorm installed
+- Composer Installed and added to your path
+- PHP-CS-Fixer installed via Composer
+
+Decision time! Because I am on windows I found that passing any kind of complex configuration to the PHP-CS-Fixer was impossible because it would require passing valid Json through cmd.exe and cmd.exe strips out all the double quotes from the Json. Also, it gets pretty ridiculous to pass a massive set of rules configuration to PHP-CS-Fixer so the configuration route provides a much better way to get this done. However, you can pass the full configuration to the tool using ```--rules='{"rule_name": "value", ...}'```
+
+My recommendation is to use the config file though. Also, if you just want rules for a specific project you can drop the php_cs.dist file into the root of the project and skip adding the rules or config argument to this and PHP-CS-Fixer will grab it automagically.
+
+Now you can set up the configuration for PHP-CS-Fixer. You can grab an example configuration from the project repo and modify it to match your needs. The documentation for all the rules is pretty extensive in their README, so check that out. Once you have that set note where your file is located for later steps.
+
+Open PHPStorm, go to the File menu and find Settings (maybe Preferences on OSX). The dialog that opens gives you access to all the many settings of PHPStorm. Look near the bottom of the list of settings for Tools and then External Tools or just Type External Tools in the search bar. When you select External Tools you will mostly likely see an empty list with some controls at the top. Hit the green plus icon.
+
+You should see a blank dialog for adding an external tool like this:
+![image](https://github.com/GrytsenkoAndrey/ed-laravel-cs-fixer/assets/63291871/9268e894-c307-4d27-9248-39d438e65c8d)
+
+Let’s set up this tool now. The name and description are arbitrary. I usually go for something like “Fix my stupid code Tool” but it's up to you. Be creative! Most of the checked boxes are fine but once you have this working the way you want, you might want to come back and uncheck the Open Console option. Leave it, for now, we will need to see the output.
+
+## Program Field
+
+Next, we need to populate the Program field. This will need to point to the .phar or .bat for PHP-CS-Fixer depending on your platform. To get the correct value you can use which on *nix or where.exe on Windows.
+
+OSX or Linux you will get something like this:
+
+```
+$ which php-cs-fixer
+$ /home/username/.composer/vendor/bin/php-cs-fixer
+```
+
+Windows:
+
+```
+$ where.exe php-cs-fixer
+$ C:\Users\user\AppData\Roaming\Composer\vendor\bin\php-cs-fixer
+$ C:\Users\user\AppData\Roaming\Composer\vendor\bin\php-cs-fixer.bat
+```
+
+Copy the path into the program field and be sure to include the .bat extension if you are on windows.
+
+## Parameters
+
+Now for Parameters. Parameters are appended after the program in the grand scheme of things so we start by adding fix --verbose then the rules or config argument --config=path/to/php_cs.dist or --rules=@PSR2 and then a few PHPStorm macros to get the file path and name "$FileDir$/$FileName$”. Additionally, it may be a good idea to add--path-mode=intersection as well to prevent a problem where you pass a filename from the tool that has been excluded by your config. All together that might look like this:
+
+```
+fix --verbose --config=C:\path\to\php_cs.dist --path-mode=intersection "$FileDir$/$FileName$"
+```
+
+## Working Directory
+
+The final field on the dialog is for the working directory and you can get that pretty easily from another PHPStorm macro $ProjectFileDir$. With all that in place your Tool settings should now look like this:
+
+![image](https://github.com/GrytsenkoAndrey/ed-laravel-cs-fixer/assets/63291871/043de5b7-253f-409d-b055-7b4bbd1fdd33)
+
+Hit OK, and you now have the external tool configured. Don’t close settings just yet though. To make this tool super useful we are going to travel up the settings list to Keymap.
+
+## Keymap
+
+Click or search for Keymap in settings. Then in the keymap window find External Tools and then again External Tools and Then whatever you named your external tool we just configured. Double-click your external tool or the green pencil at the top and select Add Keyboard Shortcut from the list. Then type a key combo (I use Alt+F) and hit OK, and then, hit OK again on settings.
+
+## Testing it out
+
+Now click into an open PHP file, or open one from your project. Make sure the cursor is in the file and then hit your key combo. You will see the console open and you should get an output something like this:
+
+![image](https://github.com/GrytsenkoAndrey/ed-laravel-cs-fixer/assets/63291871/0f466114-0637-4708-a8d6-f5507ca19882)
+
+If you get some errors you will most probably have something wrong with the Parameters field or your config is not right. If everything goes well, you can open the external tool settings again and uncheck open console, unless you just like having it open.
+
+Now go forth and program without worrying about all that formatting. You can clean it all up later with the click of a few buttons.
